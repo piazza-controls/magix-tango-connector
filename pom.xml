@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>SET YOUR GROUPID</groupId>
-    <artifactId>SET PACKAGE NAME</artifactId>
+    <groupId>waltz-controls.magix</groupId>
+    <artifactId>tango-connector</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <developers>
         <developer>
-            <!--SET DEVELOPER-->
+            <id>khokhria</id>
+            <email>igor.khokhriakov@hzg.de</email>
         </developer>
     </developers>
 
     <organization>
-        <!--SET ORGANIZATION-->
+        <name>Helmholtz-Zentrum Geesthacht</name>
+        <url>https://hzg.de</url>
     </organization>
 
     <licenses>
-        <license>        
-            <!--SET LICENSE-->
+        <license>
+            <name>GPL-v3.0</name>
         </license>
     </licenses>
 
@@ -30,14 +33,25 @@
         <tomcat.version>[9.0.12,)</tomcat.version>
         <mongodb-driver.version>3.11.2</mongodb-driver.version>
         <slf4j-api.version>1.7.5</slf4j-api.version>
-        <custom.build.name>xenv</custom.build.name>
+        <custom.build.name>magix-tango</custom.build.name>
         <mongodb.host>localhost</mongodb.host>
     </properties>
 
 
     <scm>
-        <!--SET SCM-->        
+        <connection>scm:git:git@github.com:waltz-controls/magix-tango-connector</connection>
+        <developerConnection>scm:git:git@github.com:waltz-controls/magix-tango-connector</developerConnection>
+        <url>https://github.com/waltz-controls/magix-tango-connector</url>
+        <tag>HEAD</tag>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Ingvord Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/Ingvord/RxJTango</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -79,6 +93,11 @@
             <version>${resteasy.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>${resteasy.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.0</version>
@@ -102,6 +121,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jcl</artifactId>
             <version>${slf4j-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.tango-controls.RxJTango</groupId>
+            <artifactId>rxjtango</artifactId>
+            <version>0.1</version>
         </dependency>
     </dependencies>
 
@@ -204,7 +228,7 @@
         </plugins>
     </build>
 
-    <repositories>        
+    <repositories>
         <repository>
             <snapshots>
                 <enabled>false</enabled>
@@ -212,6 +236,13 @@
             <id>bintray-release</id>
             <name>bintray</name>
             <url>http://dl.bintray.com/hzgde/hzg-wpn-projects</url>
+        </repository>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/Ingvord/RxJTango</url>
         </repository>
     </repositories>
 
