@@ -7,17 +7,20 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.sse.InboundSseEvent;
 import javax.ws.rs.sse.SseEventSource;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 03.07.2020
  */
-public class Magix {
+public class Magix implements AutoCloseable {
     private final String host;
     private final Client client;
-    private SseEventSource sseEventSource;
+    private final AtomicReference<SseEventSource> sseEventSource = new AtomicReference<>(null);
 
+
+    private final Object lock = new Object();
 
     public Magix(String endpoint, Client client) {
         this.host = endpoint;
@@ -27,7 +30,7 @@ public class Magix {
     /**
      * Indefinitely attempts to connect to this endpoint using this client
      */
-    public synchronized void connect() {
+    public void connect() {
         WebTarget target = client.target(UriBuilder.fromPath(String.format("%s/magix/api/subscribe", host)));
         SseEventSource sseEventSource;
         do {
@@ -39,7 +42,13 @@ public class Magix {
 
             sseEventSource.open();
         } while (!sseEventSource.isOpen());
-        this.sseEventSource = sseEventSource;
+        this.sseEventSource.compareAndSet(null, sseEventSource);
+    }
+
+    public String getStatus() {
+        if (sseEventSource.get().isOpen())//TODO may throw NPE
+            return "OPEN";
+        else return "PENDING";
     }
 
     private void onEvent(InboundSseEvent event) {
@@ -54,13 +63,20 @@ public class Magix {
         System.out.println("onComplete");
     }
 
-    public <T> void broadcast(T message) {
-        WebTarget target = client.target(UriBuilder.fromPath(String.format("%s/magix/api/broadcast", host)));
+    public <T> void broadcast(String channel, T message) {
+        WebTarget target = client.target(UriBuilder.fromUri(String.format("%s/magix/api/broadcast?channel=%s", host, channel)));
 
         target.request().buildPost(Entity.json(message)).submit();
     }
 
     public <T> void observe(String channel, Consumer<T> consumer) {
 
+    }
+
+    @Override
+    public void close() throws Exception {
+        SseEventSource sse = sseEventSource.get();
+        sse.close();//TODO timeout
+        sseEventSource.compareAndSet(sse, null);
     }
 }
