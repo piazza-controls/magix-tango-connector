@@ -48,5 +48,6 @@ public class MagixTangoConnectorApplication extends Application {
     private static class HeartbeatMessage {
         public long id = System.currentTimeMillis();
         public String origin = "magix-tango-connector";
+        public String action = "heartbeat";
     }
 }
