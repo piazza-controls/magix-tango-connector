@@ -1,6 +1,7 @@
 package de.hzg.wpi.waltz.magix.connector;
 
 import de.hzg.wpi.waltz.magix.client.Magix;
+import de.hzg.wpi.waltz.magix.client.Message;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -17,7 +18,8 @@ public class MagixTangoConnectorEndpoint {
 
     public MagixTangoConnectorEndpoint(Magix magix) {
         this.magix = magix;
-        this.magix.observe("message", this::onEvent);
+        this.magix.observe("tango")
+                .subscribe(this::onEvent);//TODO dispose
     }
 
     @GET
@@ -26,7 +28,7 @@ public class MagixTangoConnectorEndpoint {
     }
 
 
-    private void onEvent(String t) {
-        System.out.println(t);
+    private void onEvent(Message<?> message) {
+        System.out.println(message);
     }
 }

@@ -1,5 +1,6 @@
 package de.hzg.wpi.waltz.magix.connector;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.hzg.wpi.waltz.magix.client.Magix;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
@@ -22,7 +23,11 @@ public class MagixTangoConnectorApplication extends Application {
     public static final String MAGIX_HOST = "http://localhost:8080";
 
     public static final String MAINTENANCE = "maintenance";
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
+            new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("MagixTangoConnectorApplication-heartbeat-%d")
+                    .build());
     private final Magix magix;
 
     {
@@ -31,7 +36,7 @@ public class MagixTangoConnectorApplication extends Application {
         magix.connect();
         executorService.scheduleAtFixedRate(() -> {
             magix.broadcast(MAINTENANCE, new HeartbeatMessage());
-        }, 30, 30, TimeUnit.SECONDS);
+        }, 0, 30, TimeUnit.SECONDS);
     }
 
     @Override
