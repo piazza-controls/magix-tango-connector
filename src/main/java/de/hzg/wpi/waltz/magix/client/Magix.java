@@ -3,6 +3,8 @@ package de.hzg.wpi.waltz.magix.client;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import io.reactivex.rxjava3.subjects.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -22,6 +24,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 03.07.2020
  */
 public class Magix implements AutoCloseable {
+    private final Logger logger = LoggerFactory.getLogger(Magix.class);
+
     private final String host;
     private final Client client;
     private final AtomicReference<SseEventSource> sseEventSource = new AtomicReference<>(null);
@@ -37,7 +41,7 @@ public class Magix implements AutoCloseable {
      * Indefinitely attempts to connect to this endpoint using this client
      */
     public void connect() {
-        System.out.println("Connecting...");
+        logger.debug("Connecting to {}", this.host);
         WebTarget target = client.target(UriBuilder.fromPath(String.format("%s/magix/api/subscribe", host)));
 
         SseEventSource sseEventSource = SseEventSource.target(target)
@@ -49,25 +53,20 @@ public class Magix implements AutoCloseable {
         this.sseEventSource.compareAndSet(null, sseEventSource);
     }
 
-    public String getStatus() {
-        if (sseEventSource.get().isOpen())//TODO may throw NPE
-            return "OPEN";
-        else return "PENDING";
-    }
-
     private void onEvent(InboundSseEvent event) {
+        logger.debug("Got message in channel {}", event.getName());
         try {
             final Message<?> message = event.readData(Message.class, MediaType.APPLICATION_JSON_TYPE);
             String channel = event.getName();
             channels.getOrDefault(channel, PublishSubject.create())
                     .onNext(message);
         } catch (Throwable t) {
-            System.err.println(t.getMessage());
+            logger.warn("SSE onEvent failed {}. Ignoring...", t.getMessage());
         }
     }
 
     private void onError(Throwable throwable) {
-        System.out.println("onError: " + throwable.getMessage());
+        logger.warn("SSE onError {}", throwable.getMessage());
         this.sseEventSource.set(null);
         connect();
     }
@@ -82,6 +81,10 @@ public class Magix implements AutoCloseable {
         target.request().buildPost(Entity.json(message)).submit();
     }
 
+    public <T> void broadcast(T message) {
+        this.broadcast("message", message);
+    }
+
     public Observable<Message<?>> observe(String channel) {
         Subject<Message<?>> subject = PublishSubject.create();
 
@@ -90,11 +93,15 @@ public class Magix implements AutoCloseable {
         return Objects.requireNonNullElse(oldSubject, subject);
     }
 
+    public Observable<Message<?>> observe() {
+        return this.observe("message");
+    }
+
     @Override
     public void close() throws Exception {
-        System.out.println("Closing");
+        logger.debug("Closing...");
         SseEventSource sse = sseEventSource.get();
-        sse.close();//TODO timeout
+        sse.close();//TODO timeout, NPE
         sseEventSource.compareAndSet(sse, null);
     }
 }
