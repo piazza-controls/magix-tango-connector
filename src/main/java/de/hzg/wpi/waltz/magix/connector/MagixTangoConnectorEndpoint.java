@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
@@ -39,13 +40,24 @@ public class MagixTangoConnectorEndpoint {
     private void onEvent(Message<?> message) {
         logger.debug("Got message with action {}", message.action);
 
+        Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();//TODO
+
         new TangoAction(
                 TangoActionExecutors.newInstance(message.action),
-                Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
+                (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
                     @Override
                     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
                         System.out.println("invoke");
-                        return null;
+                        switch (method.getName()) {
+                            case "getHost":
+                                return payload.get("host");
+                            case "getDevice":
+                                return payload.get("device");
+                            case "getName":
+                                return payload.get("name");
+                            default:
+                                throw new UnsupportedOperationException(method.getName() + " is not supported!");
+                        }
                     }
                 })
         )

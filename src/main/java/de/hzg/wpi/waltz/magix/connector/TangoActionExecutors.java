@@ -1,5 +1,8 @@
 package de.hzg.wpi.waltz.magix.connector;
 
+import org.tango.client.rx.RxTango;
+import org.tango.client.rx.RxTangoAttribute;
+
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 08.07.2020
@@ -13,10 +16,10 @@ public class TangoActionExecutors {
      * @return
      * @throws IllegalArgumentException
      */
-    ActionExecutor newInstance(String action) {
+    public static ActionExecutor newInstance(String action) {
         switch (action) {
             case "read":
-
+                return new Read();
             case "write":
             case "exec":
             case "pipe":
@@ -29,8 +32,8 @@ public class TangoActionExecutors {
 
     public static class Read implements ActionExecutor {
         @Override
-        public TangoPayload execute(TangoPayload payload) throws Exception {
-
+        public <T> RxTango<T> execute(TangoPayload payload) throws Exception {
+            return new RxTangoAttribute<T>(String.format("tango://%s/%s", payload.getHost(), payload.getDevice()), payload.getName());
         }
     }
 }
