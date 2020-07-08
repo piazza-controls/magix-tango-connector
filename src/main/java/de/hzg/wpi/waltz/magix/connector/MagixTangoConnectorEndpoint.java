@@ -18,6 +18,7 @@ import java.lang.reflect.Proxy;
  */
 @Path("/connector")
 public class MagixTangoConnectorEndpoint {
+    public static final String ORIGIN_TANGO = "tango";
     private final Logger logger = LoggerFactory.getLogger(MagixTangoConnectorEndpoint.class);
 
     private final Magix magix;
@@ -25,7 +26,7 @@ public class MagixTangoConnectorEndpoint {
     public MagixTangoConnectorEndpoint(Magix magix) {
         this.magix = magix;
         this.magix.observe()
-                .filter(message -> "tango".equalsIgnoreCase(message.target))
+                .filter(message -> ORIGIN_TANGO.equalsIgnoreCase(message.target))
                 .subscribe(this::onEvent);//TODO dispose
     }
 
@@ -39,15 +40,25 @@ public class MagixTangoConnectorEndpoint {
         logger.debug("Got message with action {}", message.action);
 
         new TangoAction(
-                ActionExecutors.newInstance(message.action),
+                TangoActionExecutors.newInstance(message.action),
                 Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
                     @Override
                     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
                         System.out.println("invoke");
                         return null;
                     }
-                })).subscribe(response -> {
-            magix.broadcast(Message.builder().build());
-        });
+                })
+        )
+                .observe()
+                .subscribe(response -> {
+                    magix.broadcast(
+                            Message.builder()
+                                    .setId(System.currentTimeMillis())
+                                    .setParent(message.id)
+                                    .setOrigin(ORIGIN_TANGO)
+                                    .setUser(message.user)
+                                    .addPayload(response)
+                                    .build());
+                });
     }
 }

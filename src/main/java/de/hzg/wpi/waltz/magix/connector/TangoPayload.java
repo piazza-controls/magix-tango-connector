@@ -5,9 +5,19 @@ package de.hzg.wpi.waltz.magix.connector;
  * @since 07.07.2020
  */
 public interface TangoPayload {
-    public String getHost();
+    String getHost();
 
-    public String getDevice();
+    String getDevice();
 
-    public String getName();
+    String getName();
+
+    <T> T getValue();
+
+    long getTimestamp();
+
+    String getQuality();
+
+    String getEvent();
+
+    <T> T getInput();
 }
