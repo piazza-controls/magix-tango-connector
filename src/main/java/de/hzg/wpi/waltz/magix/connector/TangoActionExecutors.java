@@ -2,6 +2,7 @@ package de.hzg.wpi.waltz.magix.connector;
 
 import org.tango.client.rx.RxTango;
 import org.tango.client.rx.RxTangoAttribute;
+import org.tango.client.rx.RxTangoAttributeWrite;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
@@ -21,6 +22,7 @@ public class TangoActionExecutors {
             case "read":
                 return new Read();
             case "write":
+                return new Write();
             case "exec":
             case "pipe":
             case "subscribe":
@@ -34,6 +36,13 @@ public class TangoActionExecutors {
         @Override
         public <T> RxTango<T> execute(TangoPayload payload) throws Exception {
             return new RxTangoAttribute<T>(String.format("tango://%s/%s", payload.getHost(), payload.getDevice()), payload.getName());
+        }
+    }
+
+    public static class Write implements ActionExecutor {
+        @Override
+        public <T> RxTango<T> execute(TangoPayload payload) throws Exception {
+            return new RxTangoAttributeWrite<T>(String.format("tango://%s/%s", payload.getHost(), payload.getDevice()), payload.getName(), payload.getValue());
         }
     }
 }

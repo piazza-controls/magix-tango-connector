@@ -47,7 +47,6 @@ public class MagixTangoConnectorEndpoint {
                 (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
                     @Override
                     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                        System.out.println("invoke");
                         switch (method.getName()) {
                             case "getHost":
                                 return payload.get("host");
@@ -55,6 +54,10 @@ public class MagixTangoConnectorEndpoint {
                                 return payload.get("device");
                             case "getName":
                                 return payload.get("name");
+                            case "getValue":
+                                return payload.get("value");
+                            case "getInput":
+                                return payload.get("input");
                             default:
                                 throw new UnsupportedOperationException(method.getName() + " is not supported!");
                         }

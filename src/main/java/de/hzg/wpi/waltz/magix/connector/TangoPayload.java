@@ -19,9 +19,13 @@ public interface TangoPayload {
         return null;
     }
 
-    long getTimestamp();
+    default long getTimestamp() {
+        return System.currentTimeMillis();
+    }
 
-    String getQuality();
+    default String getQuality() {
+        return "VALID";
+    }
 
     default String getEvent() {
         return null;
