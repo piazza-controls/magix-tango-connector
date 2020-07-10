@@ -2,11 +2,13 @@ package de.hzg.wpi.waltz.magix.connector;
 
 import de.hzg.wpi.waltz.magix.client.Magix;
 import de.hzg.wpi.waltz.magix.client.Message;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -27,6 +29,8 @@ public class MagixTangoConnectorEndpoint {
     public MagixTangoConnectorEndpoint(Magix magix) {
         this.magix = magix;
         this.magix.observe()
+                .observeOn(Schedulers.io())
+                .map(inboundSseEvent -> inboundSseEvent.readData(Message.class, MediaType.APPLICATION_JSON_TYPE))
                 .filter(message -> ORIGIN_TANGO.equalsIgnoreCase(message.target))
                 .subscribe(this::onEvent);//TODO dispose
     }
@@ -38,7 +42,7 @@ public class MagixTangoConnectorEndpoint {
 
 
     private void onEvent(Message<?> message) {
-        logger.debug("Got message with action {}", message.action);
+        logger.info("Got message with action {}", message.action);
 
         Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();//TODO
 
@@ -66,6 +70,7 @@ public class MagixTangoConnectorEndpoint {
         )
                 .observe()
                 .subscribe(response -> {
+                    logger.info("Broadcasting response...");
                     magix.broadcast(
                             Message.builder()
                                     .setId(System.currentTimeMillis())

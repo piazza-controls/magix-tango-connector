@@ -68,11 +68,6 @@ public class TestClient {
                                     })
                                     .build()
                     );
-
-                    disposable = magix.observe()
-                            .subscribe(message -> {
-                                counter.incrementAndGet();
-                            });
                 }
                 disposable.dispose();
             });

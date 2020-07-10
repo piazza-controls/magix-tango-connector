@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.sse.InboundSseEvent;
 import javax.ws.rs.sse.SseEventSource;
@@ -29,7 +28,7 @@ public class Magix implements AutoCloseable {
     private final String host;
     private final Client client;
     private final AtomicReference<SseEventSource> sseEventSource = new AtomicReference<>(null);
-    private final ConcurrentMap<String, Subject<Message<?>>> channels = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Subject<InboundSseEvent>> channels = new ConcurrentHashMap<>();
 
 
     public Magix(String endpoint, Client client) {
@@ -56,10 +55,9 @@ public class Magix implements AutoCloseable {
     private void onEvent(InboundSseEvent event) {
         logger.debug("Got message in channel {}", event.getName());
         try {
-            final Message<?> message = event.readData(Message.class, MediaType.APPLICATION_JSON_TYPE);
             String channel = event.getName();
             channels.getOrDefault(channel, PublishSubject.create())
-                    .onNext(message);
+                    .onNext(event);
         } catch (Throwable t) {
             logger.warn("SSE onEvent failed {}. Ignoring...", t.getMessage());
         }
@@ -85,15 +83,16 @@ public class Magix implements AutoCloseable {
         this.broadcast("message", message);
     }
 
-    public Observable<Message<?>> observe(String channel) {
-        Subject<Message<?>> subject = PublishSubject.create();
+    public Observable<InboundSseEvent> observe(String channel) {
+        Subject<InboundSseEvent> subject = PublishSubject
+                .create();
 
-        Subject<Message<?>> oldSubject = channels.putIfAbsent(channel, subject);
+        Subject<InboundSseEvent> oldSubject = channels.putIfAbsent(channel, subject);
 
         return Objects.requireNonNullElse(oldSubject, subject);
     }
 
-    public Observable<Message<?>> observe() {
+    public Observable<InboundSseEvent> observe() {
         return this.observe("message");
     }
 
