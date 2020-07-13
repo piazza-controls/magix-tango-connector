@@ -1,5 +1,6 @@
 package de.hzg.wpi.waltz.magix.connector;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.hzg.wpi.waltz.magix.client.Magix;
 import de.hzg.wpi.waltz.magix.client.Message;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -14,6 +15,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
@@ -29,7 +31,11 @@ public class MagixTangoConnectorEndpoint {
     public MagixTangoConnectorEndpoint(Magix magix) {
         this.magix = magix;
         this.magix.observe()
-                .observeOn(Schedulers.io())
+                .observeOn(Schedulers.from(Executors.newScheduledThreadPool(2000,
+                        new ThreadFactoryBuilder()
+                                .setDaemon(true)
+                                .setNameFormat("MagixTangoConnectorEndpoint-processor-%d")
+                                .build()), true))
                 .map(inboundSseEvent -> inboundSseEvent.readData(Message.class, MediaType.APPLICATION_JSON_TYPE))
                 .filter(message -> ORIGIN_TANGO.equalsIgnoreCase(message.target))
                 .subscribe(this::onEvent);//TODO dispose
@@ -42,11 +48,11 @@ public class MagixTangoConnectorEndpoint {
 
 
     private void onEvent(Message<?> message) {
-        logger.info("Got message with action {}", message.action);
+        logger.debug("Got message with action {}", message.action);
 
         Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();//TODO
 
-        new TangoAction(
+        TangoPayload result = new TangoAction(
                 TangoActionExecutors.newInstance(message.action),
                 (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
                     @Override
@@ -67,18 +73,15 @@ public class MagixTangoConnectorEndpoint {
                         }
                     }
                 })
-        )
-                .observe()
-                .subscribe(response -> {
-                    logger.info("Broadcasting response...");
-                    magix.broadcast(
-                            Message.builder()
-                                    .setId(System.currentTimeMillis())
-                                    .setParent(message.id)
-                                    .setOrigin(ORIGIN_TANGO)
-                                    .setUser(message.user)
-                                    .addPayload(response)
-                                    .build());
-                });
+        ).execute();
+        logger.debug("Broadcasting response...");
+        magix.broadcast(
+                Message.builder()
+                        .setId(System.currentTimeMillis())
+                        .setParent(message.id)
+                        .setOrigin(ORIGIN_TANGO)
+                        .setUser(message.user)
+                        .addPayload(result)
+                        .build());
     }
 }

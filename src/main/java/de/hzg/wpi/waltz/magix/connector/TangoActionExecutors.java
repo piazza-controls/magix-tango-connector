@@ -4,13 +4,12 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import org.tango.client.ez.proxy.TangoProxies;
-import org.tango.client.ez.proxy.TangoProxy;
-import org.tango.client.ez.proxy.TangoProxyException;
-import org.tango.client.rx.RxTango;
-import org.tango.client.rx.RxTangoAttribute;
-import org.tango.client.rx.RxTangoAttributeWrite;
+import fr.esrf.Tango.DevError;
+import org.tango.client.ez.proxy.*;
+import org.tango.utils.DevFailedUtils;
 
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,6 +42,7 @@ public class TangoActionExecutors {
             case "write":
                 return new Write();
             case "exec":
+                return new Exec();
             case "pipe":
             case "subscribe":
                 return null;
@@ -53,20 +53,238 @@ public class TangoActionExecutors {
 
     public static class Read implements ActionExecutor {
         @Override
-        public <T> RxTango<T> execute(TangoPayload payload) throws Exception {
+        public TangoPayload execute(TangoPayload payload) {
             String url = String.format("tango://%s/%s", payload.getHost(), payload.getDevice());
-            TangoProxy proxy = CACHE.get(url);
-            return new RxTangoAttribute<T>(proxy, payload.getName());
+
+            try {
+                TangoProxy proxy = CACHE.get(url);
+                ValueTimeQuality<Object> result = proxy.readAttributeValueTimeQuality(payload.getName());
+                return new TangoPayload() {
+                    @Override
+                    public String getHost() {
+                        return payload.getHost();
+                    }
+
+                    @Override
+                    public String getDevice() {
+                        return payload.getDevice();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return payload.getName();
+                    }
+
+                    @Override
+                    public <T> T getValue() {
+                        return (T) result.value;
+                    }
+
+                    @Override
+                    public long getTimestamp() {
+                        return result.time;
+                    }
+
+                    @Override
+                    public String getQuality() {
+                        return result.quality.toString();
+                    }
+                };
+            } catch (ExecutionException | ReadAttributeException | NoSuchAttributeException e) {
+                return new TangoPayload() {
+                    private long timestamp = System.currentTimeMillis();
+
+                    @Override
+                    public String getHost() {
+                        return payload.getHost();
+                    }
+
+                    @Override
+                    public String getDevice() {
+                        return payload.getDevice();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return payload.getName();
+                    }
+
+                    @Override
+                    public long getTimestamp() {
+                        return timestamp;
+                    }
+
+                    @Override
+                    public String getQuality() {
+                        return "FAILURE";
+                    }
+
+                    @Override
+                    public Iterable<? extends DevError> getErrors() {
+                        return Arrays.asList(DevFailedUtils.newDevFailed(e).errors);
+                    }
+                };
+            }
         }
     }
 
     public static class Write implements ActionExecutor {
         @Override
-        public <T> RxTango<T> execute(TangoPayload payload) throws Exception {
+        public TangoPayload execute(TangoPayload payload) {
             String url = String.format("tango://%s/%s", payload.getHost(), payload.getDevice());
-            TangoProxy proxy = CACHE.get(url);
+            try {
+                TangoProxy proxy = CACHE.get(url);
+                proxy.writeAttribute(payload.getName(), payload.getValue());
+                return new TangoPayload() {
+                    private long timestamp = System.currentTimeMillis();
 
-            return new RxTangoAttributeWrite<T>(proxy, payload.getName(), payload.getValue());
+                    @Override
+                    public String getHost() {
+                        return payload.getHost();
+                    }
+
+                    @Override
+                    public String getDevice() {
+                        return payload.getDevice();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return payload.getName();
+                    }
+
+                    @Override
+                    public <T> T getValue() {
+                        return (T) payload.getValue();
+                    }
+
+                    @Override
+                    public long getTimestamp() {
+                        return timestamp;
+                    }
+
+                    @Override
+                    public String getQuality() {
+                        return "PENDING";
+                    }
+                };
+            } catch (ExecutionException | NoSuchAttributeException | WriteAttributeException e) {
+                return new TangoPayload() {
+                    private long timestamp = System.currentTimeMillis();
+
+                    @Override
+                    public String getHost() {
+                        return payload.getHost();
+                    }
+
+                    @Override
+                    public String getDevice() {
+                        return payload.getDevice();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return payload.getName();
+                    }
+
+                    @Override
+                    public long getTimestamp() {
+                        return timestamp;
+                    }
+
+                    @Override
+                    public String getQuality() {
+                        return "FAILURE";
+                    }
+
+                    @Override
+                    public Iterable<? extends DevError> getErrors() {
+                        return Arrays.asList(DevFailedUtils.newDevFailed(e).errors);
+                    }
+                };
+            }
+        }
+    }
+
+    public static class Exec implements ActionExecutor {
+        @Override
+        public TangoPayload execute(TangoPayload payload) {
+            String url = String.format("tango://%s/%s", payload.getHost(), payload.getDevice());
+            try {
+                TangoProxy proxy = CACHE.get(url);
+                Object result = (payload.getInput() == null) ?
+                        proxy.executeCommand(payload.getName()) :
+                        proxy.executeCommand(payload.getName(), payload.getInput());
+
+
+                return new TangoPayload() {
+                    private long timestamp = System.currentTimeMillis();
+
+                    @Override
+                    public String getHost() {
+                        return payload.getHost();
+                    }
+
+                    @Override
+                    public String getDevice() {
+                        return payload.getDevice();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return payload.getName();
+                    }
+
+                    @Override
+                    public <T> T getValue() {
+                        return (T) result;
+                    }
+
+                    @Override
+                    public long getTimestamp() {
+                        return timestamp;
+                    }
+
+                    @Override
+                    public String getQuality() {
+                        return "VALID";
+                    }
+                };
+            } catch (ExecutionException | ExecuteCommandException | NoSuchCommandException e) {
+                return new TangoPayload() {
+                    private long timestamp = System.currentTimeMillis();
+
+                    @Override
+                    public String getHost() {
+                        return payload.getHost();
+                    }
+
+                    @Override
+                    public String getDevice() {
+                        return payload.getDevice();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return payload.getName();
+                    }
+
+                    @Override
+                    public long getTimestamp() {
+                        return timestamp;
+                    }
+
+                    @Override
+                    public String getQuality() {
+                        return "FAILURE";
+                    }
+
+                    @Override
+                    public Iterable<? extends DevError> getErrors() {
+                        return Arrays.asList(DevFailedUtils.newDevFailed(e).errors);
+                    }
+                };
+            }
         }
     }
 }
