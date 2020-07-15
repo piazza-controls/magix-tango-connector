@@ -35,7 +35,7 @@ public class TestClient {
         Magix magix = new Magix("http://localhost:8080", client);
         magix.connect();
 
-        for (int i = 0; i < NUMBER_OF_CLIENTS; ++i) {
+        for (int i = 0; i < 1; ++i) {
             executorService.submit(() -> {
                 Disposable disposable = null;
                 while (!finish.get()) {

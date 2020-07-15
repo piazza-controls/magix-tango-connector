@@ -1,6 +1,5 @@
 package de.hzg.wpi.waltz.magix.connector;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.hzg.wpi.waltz.magix.client.Magix;
 import de.hzg.wpi.waltz.magix.client.Message;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -15,7 +14,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
@@ -31,11 +29,7 @@ public class MagixTangoConnectorEndpoint {
     public MagixTangoConnectorEndpoint(Magix magix) {
         this.magix = magix;
         this.magix.observe()
-                .observeOn(Schedulers.from(Executors.newScheduledThreadPool(2000,
-                        new ThreadFactoryBuilder()
-                                .setDaemon(true)
-                                .setNameFormat("MagixTangoConnectorEndpoint-processor-%d")
-                                .build()), true))
+                .observeOn(Schedulers.io())
                 .map(inboundSseEvent -> inboundSseEvent.readData(Message.class, MediaType.APPLICATION_JSON_TYPE))
                 .filter(message -> ORIGIN_TANGO.equalsIgnoreCase(message.target))
                 .subscribe(this::onEvent);//TODO dispose
