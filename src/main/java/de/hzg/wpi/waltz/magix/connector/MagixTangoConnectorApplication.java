@@ -2,7 +2,6 @@ package de.hzg.wpi.waltz.magix.connector;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.hzg.wpi.waltz.magix.client.Magix;
-import de.hzg.wpi.waltz.magix.reader.TangoMessageReader;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
 import javax.ws.rs.ApplicationPath;
@@ -45,7 +44,7 @@ public class MagixTangoConnectorApplication extends Application {
         Set<Object> singletons = new HashSet<>();
 
 
-        singletons.add(new TangoMessageReader());
+//        singletons.add(new TangoMessageReader());
         singletons.add(new MagixTangoConnectorEndpoint(magix));
 
 

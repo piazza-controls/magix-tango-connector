@@ -6,8 +6,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.InvocationHandler;
@@ -38,6 +37,44 @@ public class MagixTangoConnectorEndpoint {
     @GET
     public Response get() {
         return Response.ok().build();
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Message<Object> execute(Message<Object> message) {
+        Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();
+
+        TangoPayload result = new TangoAction(
+                TangoActionExecutors.newInstance(message.action),
+                (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+                        switch (method.getName()) {
+                            case "getHost":
+                                return payload.get("host");
+                            case "getDevice":
+                                return payload.get("device");
+                            case "getName":
+                                return payload.get("name");
+                            case "getValue":
+                                return payload.get("value");
+                            case "getInput":
+                                return payload.get("input");
+                            default:
+                                throw new UnsupportedOperationException(method.getName() + " is not supported!");
+                        }
+                    }
+                })
+        ).execute();
+        logger.debug("Broadcasting response...");
+        return Message.builder()
+                .setId(System.currentTimeMillis())
+                .setParent(message.id)
+                .setOrigin(ORIGIN_TANGO)
+                .setUser(message.user)
+                .addPayload(result)
+                .build();
     }
 
 
