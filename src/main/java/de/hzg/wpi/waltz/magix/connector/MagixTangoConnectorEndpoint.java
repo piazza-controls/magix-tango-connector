@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
@@ -22,6 +23,7 @@ import java.util.Map;
 public class MagixTangoConnectorEndpoint {
     public static final String ORIGIN_TANGO = "tango";
     private final Logger logger = LoggerFactory.getLogger(MagixTangoConnectorEndpoint.class);
+    private final AtomicLong counter = new AtomicLong(0L);
 
     private final Magix magix;
 
@@ -35,8 +37,9 @@ public class MagixTangoConnectorEndpoint {
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public Response get() {
-        return Response.ok().build();
+        return Response.ok().entity(counter.get()).build();
     }
 
     @POST
@@ -83,28 +86,33 @@ public class MagixTangoConnectorEndpoint {
 
         Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();//TODO
 
-        TangoPayload result = new TangoAction(
-                TangoActionExecutors.newInstance(message.action),
-                (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                        switch (method.getName()) {
-                            case "getHost":
-                                return payload.get("host");
-                            case "getDevice":
-                                return payload.get("device");
-                            case "getName":
-                                return payload.get("name");
-                            case "getValue":
-                                return payload.get("value");
-                            case "getInput":
-                                return payload.get("input");
-                            default:
-                                throw new UnsupportedOperationException(method.getName() + " is not supported!");
-                        }
-                    }
-                })
-        ).execute();
+//        TangoPayload result = new TangoAction(
+//                TangoActionExecutors.newInstance(message.action),
+//                (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
+//                    @Override
+//                    public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+//                        switch (method.getName()) {
+//                            case "getHost":
+//                                return payload.get("host");
+//                            case "getDevice":
+//                                return payload.get("device");
+//                            case "getName":
+//                                return payload.get("name");
+//                            case "getValue":
+//                                return payload.get("value");
+//                            case "getInput":
+//                                return payload.get("input");
+//                            default:
+//                                throw new UnsupportedOperationException(method.getName() + " is not supported!");
+//                        }
+//                    }
+//                })
+//        ).execute();
+        try {
+            counter.incrementAndGet();
+            Thread.sleep(20);
+        } catch (InterruptedException ignored) {
+        }
         logger.debug("Broadcasting response...");
         magix.broadcast(
                 Message.builder()
@@ -112,7 +120,7 @@ public class MagixTangoConnectorEndpoint {
                         .setParent(message.id)
                         .setOrigin(ORIGIN_TANGO)
                         .setUser(message.user)
-                        .addPayload(result)
+                        .addPayload(/*result*/payload)
                         .build());
     }
 }
