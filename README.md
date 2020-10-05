@@ -45,3 +45,58 @@ Your `settings.xml` must looks like:
   </servers>
 </settings>
 ```
+
+### NPM error
+
+In case you have faced with next error:
+
+```bash
+npm ERR! code EJSONPARSE
+npm ERR! file /home/aleksey/projects/study/magix-tango-connector/package.json
+npm ERR! JSON.parse Failed to parse json
+npm ERR! JSON.parse Unexpected token 
+npm ERR! JSON.parse  in JSON at position 873 while parsing '{
+npm ERR! JSON.parse   "name": "SET PACKAGE NAME",
+npm ERR! JSON.parse   "versi'
+npm ERR! JSON.parse Failed to parse package.json data.
+npm ERR! JSON.parse package.json must be actual JSON, not just JavaScript.
+```
+
+All you need to do for successful compilation is just to comment next lines in `pom.xml`:
+
+```xml
+<execution>
+    <id>generate-js</id>
+    <phase>generate-sources</phase>
+    <goals>
+        <goal>exec</goal>
+    </goals>
+    <configuration>
+        <executable>npm</executable>
+        <arguments>
+            <argument>run</argument>
+            <argument>build</argument>
+        </arguments>
+    </configuration>
+</execution>
+```
+
+Or just replace with next xml part:
+
+
+```xml
+<!--                    <execution>-->
+<!--                        <id>generate-js</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>exec</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <executable>npm</executable>-->
+<!--                            <arguments>-->
+<!--                                <argument>run</argument>-->
+<!--                                <argument>build</argument>-->
+<!--                            </arguments>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+```
