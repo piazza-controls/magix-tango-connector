@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 03.07.2020
  */
-public class Magix implements AutoCloseable {
+public class Magix implements MagixClient {
     private final Logger logger = LoggerFactory.getLogger(Magix.class);
 
     private final String host;
@@ -39,6 +39,7 @@ public class Magix implements AutoCloseable {
     /**
      * Indefinitely attempts to connect to this endpoint using this client
      */
+    @Override
     public void connect() {
         logger.debug("Connecting to {}", this.host);
         WebTarget target = client.target(UriBuilder.fromPath(String.format("%s/magix/api/subscribe", host)));
@@ -73,16 +74,14 @@ public class Magix implements AutoCloseable {
         System.out.println("onComplete");
     }
 
+    @Override
     public <T> void broadcast(String channel, T message) {
         WebTarget target = client.target(UriBuilder.fromUri(String.format("%s/magix/api/broadcast?channel=%s", host, channel)));
 
         target.request().buildPost(Entity.json(message)).submit();
     }
 
-    public <T> void broadcast(T message) {
-        this.broadcast("message", message);
-    }
-
+    @Override
     public Observable<InboundSseEvent> observe(String channel) {
         Subject<InboundSseEvent> subject = PublishSubject
                 .create();
@@ -90,10 +89,6 @@ public class Magix implements AutoCloseable {
         Subject<InboundSseEvent> oldSubject = channels.putIfAbsent(channel, subject);
 
         return Objects.requireNonNullElse(oldSubject, subject);
-    }
-
-    public Observable<InboundSseEvent> observe() {
-        return this.observe("message");
     }
 
     @Override
