@@ -1,7 +1,5 @@
 package de.hzg.wpi.waltz.magix.client;
 
-import java.util.ArrayList;
-
 /**
  * Compliant with Waltz-Controls RFC-1
  *
@@ -14,16 +12,12 @@ public class Message<T> {
     public String origin;
     public String target;
     public String user;
-    public String action;
-    public Iterable<T> payload;
+    //    public String action;
+    public T payload;
 
     public static <T> Message.Builder<T> builder() {
         return new Builder<>() {
             private Message<T> message = new Message<>();
-
-            {
-                message.payload = new ArrayList<>();
-            }
 
             @Override
             public Message<T> build() {
@@ -60,15 +54,15 @@ public class Message<T> {
                 return this;
             }
 
-            @Override
-            public Builder<T> setAction(String action) {
-                message.action = action;
-                return this;
-            }
+//            @Override
+//            public Builder<T> setAction(String action) {
+//                message.action = action;
+//                return this;
+//            }
 
             @Override
-            public Builder<T> addPayload(T payload) {
-                ((ArrayList<T>) message.payload).add(payload);
+            public Builder<T> setPayload(T payload) {
+                message.payload = payload;
                 return this;
             }
         };
@@ -87,8 +81,8 @@ public class Message<T> {
 
         Builder<T> setUser(String user);
 
-        Builder<T> setAction(String action);
+//        Builder<T> setAction(String action);
 
-        Builder<T> addPayload(T payload);
+        Builder<T> setPayload(T payload);
     }
 }

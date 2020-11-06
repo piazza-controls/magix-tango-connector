@@ -9,6 +9,7 @@ import java.util.Collections;
  * @since 07.07.2020
  */
 public interface TangoPayload {
+
     String getHost();
 
     String getDevice();
@@ -17,6 +18,10 @@ public interface TangoPayload {
 
     default <T> T getValue() {
         return null;
+    }
+
+    default String getAction() {
+        return "null";
     }
 
     default long getTimestamp() {

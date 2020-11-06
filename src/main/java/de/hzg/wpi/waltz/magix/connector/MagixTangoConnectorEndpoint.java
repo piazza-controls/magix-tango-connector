@@ -43,68 +43,64 @@ public class MagixTangoConnectorEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Message<Object> execute(Message<Object> message) {
-        Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();
+        Map<String, Object> rawPayload = (Map<String, Object>) message.payload;
 
-        TangoPayload result = new TangoAction(
-                TangoActionExecutors.newInstance(message.action),
-                (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                        switch (method.getName()) {
-                            case "getHost":
-                                return payload.get("host");
-                            case "getDevice":
-                                return payload.get("device");
-                            case "getName":
-                                return payload.get("name");
-                            case "getValue":
-                                return payload.get("value");
-                            case "getInput":
-                                return payload.get("input");
-                            default:
-                                throw new UnsupportedOperationException(method.getName() + " is not supported!");
-                        }
-                    }
-                })
-        ).execute();
+        TangoPayload payload = (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
+            @Override
+            public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+                switch (method.getName()) {
+                    case "getHost":
+                        return rawPayload.get("host");
+                    case "getDevice":
+                        return rawPayload.get("device");
+                    case "getName":
+                        return rawPayload.get("name");
+                    case "getValue":
+                        return rawPayload.get("value");
+                    case "getInput":
+                        return rawPayload.get("input");
+                    default:
+                        throw new UnsupportedOperationException(method.getName() + " is not supported!");
+                }
+            }
+        });
+
+        TangoPayload result = new TangoAction(TangoActionExecutors.newInstance(payload.getAction()), payload).execute();
         logger.debug("Broadcasting response...");
         return Message.builder()
                 .setId(System.currentTimeMillis())
                 .setParent(message.id)
                 .setOrigin(ORIGIN_TANGO)
                 .setUser(message.user)
-                .addPayload(result)
+                .setPayload(result)
                 .build();
     }
 
 
     private void onEvent(Message<?> message) {
-        logger.debug("Got message with action {}", message.action);
+        Map<String, Object> rawPayload = (Map<String, Object>) message.payload;//TODO
+        TangoPayload payload = (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
+            @Override
+            public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+                switch (method.getName()) {
+                    case "getHost":
+                        return rawPayload.get("host");
+                    case "getDevice":
+                        return rawPayload.get("device");
+                    case "getName":
+                        return rawPayload.get("name");
+                    case "getValue":
+                        return rawPayload.get("value");
+                    case "getInput":
+                        return rawPayload.get("input");
+                    default:
+                        throw new UnsupportedOperationException(method.getName() + " is not supported!");
+                }
+            }
+        });
+        logger.debug("Got message with action {}", payload.getAction());
 
-        Map<String, Object> payload = (Map<String, Object>) message.payload.iterator().next();//TODO
-
-        TangoPayload result = new TangoAction(
-                TangoActionExecutors.newInstance(message.action),
-                (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                        switch (method.getName()) {
-                            case "getHost":
-                                return payload.get("host");
-                            case "getDevice":
-                                return payload.get("device");
-                            case "getName":
-                                return payload.get("name");
-                            case "getValue":
-                                return payload.get("value");
-                            case "getInput":
-                                return payload.get("input");
-                            default:
-                                throw new UnsupportedOperationException(method.getName() + " is not supported!");
-                        }
-                    }
-                })
-        ).execute();
+        TangoPayload result = new TangoAction(TangoActionExecutors.newInstance(payload.getAction()), payload).execute();
         logger.debug("Broadcasting response...");
         magix.broadcast(
                 Message.builder()
@@ -112,7 +108,7 @@ public class MagixTangoConnectorEndpoint {
                         .setParent(message.id)
                         .setOrigin(ORIGIN_TANGO)
                         .setUser(message.user)
-                        .addPayload(result)
+                        .setPayload(result)
                         .build());
     }
 }
