@@ -160,7 +160,7 @@ public class TangoActionExecutors {
 
                     @Override
                     public <T> T getValue() {
-                        return (T) payload.getValue();
+                        return payload.getValue();
                     }
 
                     @Override
@@ -223,7 +223,7 @@ public class TangoActionExecutors {
 
 
                 return new TangoPayload() {
-                    private long timestamp = System.currentTimeMillis();
+                    private final long timestamp = System.currentTimeMillis();
 
                     @Override
                     public String getHost() {

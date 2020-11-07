@@ -16,7 +16,7 @@ public class Message<T> {
 
     public static <T> Message.Builder<T> builder() {
         return new Builder<>() {
-            private Message<T> message = new Message<>();
+            private final Message<T> message = new Message<>();
 
             @Override
             public Message<T> build() {
@@ -61,7 +61,7 @@ public class Message<T> {
         };
     }
 
-    public static interface Builder<T> {
+    public interface Builder<T> {
         Message<T> build();
 
         Builder<T> setId(long id);

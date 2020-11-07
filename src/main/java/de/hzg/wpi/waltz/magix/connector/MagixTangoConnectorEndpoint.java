@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 
@@ -43,28 +41,7 @@ public class MagixTangoConnectorEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Message<Object> execute(Message<Object> message) {
-        Map<String, Object> rawPayload = (Map<String, Object>) message.payload;
-
-        TangoPayload payload = (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
-            @Override
-            public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                switch (method.getName()) {
-                    case "getHost":
-                        return rawPayload.get("host");
-                    case "getDevice":
-                        return rawPayload.get("device");
-                    case "getName":
-                        return rawPayload.get("name");
-                    case "getValue":
-                        return rawPayload.get("value");
-                    case "getInput":
-                        return rawPayload.get("input");
-                    default:
-                        throw new UnsupportedOperationException(method.getName() + " is not supported!");
-                }
-            }
-        });
-
+        TangoPayload payload = readMessagePayload(message);
         TangoPayload result = new TangoAction(TangoActionExecutors.newInstance(payload.getAction()), payload).execute();
         logger.debug("Broadcasting response...");
         return Message.builder()
@@ -78,26 +55,7 @@ public class MagixTangoConnectorEndpoint {
 
 
     private void onEvent(Message<?> message) {
-        Map<String, Object> rawPayload = (Map<String, Object>) message.payload;//TODO
-        TangoPayload payload = (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, new InvocationHandler() {
-            @Override
-            public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                switch (method.getName()) {
-                    case "getHost":
-                        return rawPayload.get("host");
-                    case "getDevice":
-                        return rawPayload.get("device");
-                    case "getName":
-                        return rawPayload.get("name");
-                    case "getValue":
-                        return rawPayload.get("value");
-                    case "getInput":
-                        return rawPayload.get("input");
-                    default:
-                        throw new UnsupportedOperationException(method.getName() + " is not supported!");
-                }
-            }
-        });
+        TangoPayload payload = readMessagePayload(message);
         logger.debug("Got message with action {}", payload.getAction());
 
         TangoPayload result = new TangoAction(TangoActionExecutors.newInstance(payload.getAction()), payload).execute();
@@ -110,5 +68,25 @@ public class MagixTangoConnectorEndpoint {
                         .setUser(message.user)
                         .setPayload(result)
                         .build());
+    }
+
+    private TangoPayload readMessagePayload(Message<?> message) {
+        Map<String, Object> rawPayload = (Map<String, Object>) message.payload;
+        return  (TangoPayload) Proxy.newProxyInstance(TangoPayload.class.getClassLoader(), new Class[]{TangoPayload.class}, (o, method, objects) -> {
+            switch (method.getName()) {
+                case "getHost":
+                    return rawPayload.get("host");
+                case "getDevice":
+                    return rawPayload.get("device");
+                case "getName":
+                    return rawPayload.get("name");
+                case "getValue":
+                    return rawPayload.get("value");
+                case "getInput":
+                    return rawPayload.get("input");
+                default:
+                    throw new UnsupportedOperationException(method.getName() + " is not supported!");
+            }
+        });
     }
 }

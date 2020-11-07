@@ -84,8 +84,8 @@ public class TestClient {
 
         executorService.shutdownNow();
 
-        System.out.println(String.format("Total writes count: %d", counter.get()));
-        System.out.println(String.format("Total errors count: %d", errors.get()));
+        System.out.printf("Total writes count: %d%n", counter.get());
+        System.out.printf("Total errors count: %d%n", errors.get());
     }
 
 
@@ -147,8 +147,8 @@ public class TestClient {
 
         executorService.shutdownNow();
 
-        System.out.println(String.format("Total writes count: %d", counter.get()));
-        System.out.println(String.format("Total errors count: %d", errors.get()));
+        System.out.printf("Total writes count: %d%n", counter.get());
+        System.out.printf("Total errors count: %d%n", errors.get());
     }
 
 }
