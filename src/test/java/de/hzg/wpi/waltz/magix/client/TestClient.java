@@ -45,9 +45,13 @@ public class TestClient {
                     magix.broadcast(
                             Message.builder()
                                     .setId(id)
-                                    .setAction("write")
                                     .setTarget("tango")
-                                    .addPayload(new TangoPayload() {
+                                    .setPayload(new TangoPayload() {
+                                        @Override
+                                        public String getAction() {
+                                            return "write";
+                                        }
+
                                         @Override
                                         public String getHost() {
                                             return "hzgxenvtest:10000";
@@ -105,9 +109,13 @@ public class TestClient {
                             .request(MediaType.APPLICATION_JSON_TYPE)
                             .buildPost(Entity.json(Message.builder()
                                     .setId(id)
-                                    .setAction("write")
                                     .setTarget("tango")
-                                    .addPayload(new TangoPayload() {
+                                    .setPayload(new TangoPayload() {
+                                        @Override
+                                        public String getAction() {
+                                            return "write";
+                                        }
+
                                         @Override
                                         public String getHost() {
                                             return "hzgxenvtest:10000";

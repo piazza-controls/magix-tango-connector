@@ -21,7 +21,7 @@ public interface TangoPayload {
     }
 
     default String getAction() {
-        return "null";
+        return null;
     }
 
     default long getTimestamp() {

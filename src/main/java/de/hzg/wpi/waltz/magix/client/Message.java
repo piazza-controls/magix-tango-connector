@@ -12,7 +12,6 @@ public class Message<T> {
     public String origin;
     public String target;
     public String user;
-    //    public String action;
     public T payload;
 
     public static <T> Message.Builder<T> builder() {
@@ -54,12 +53,6 @@ public class Message<T> {
                 return this;
             }
 
-//            @Override
-//            public Builder<T> setAction(String action) {
-//                message.action = action;
-//                return this;
-//            }
-
             @Override
             public Builder<T> setPayload(T payload) {
                 message.payload = payload;
@@ -80,8 +73,6 @@ public class Message<T> {
         Builder<T> setTarget(String target);
 
         Builder<T> setUser(String user);
-
-//        Builder<T> setAction(String action);
 
         Builder<T> setPayload(T payload);
     }
