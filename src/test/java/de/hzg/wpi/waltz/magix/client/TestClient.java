@@ -45,9 +45,13 @@ public class TestClient {
                     magix.broadcast(
                             Message.builder()
                                     .setId(id)
-                                    .setAction("write")
                                     .setTarget("tango")
-                                    .addPayload(new TangoPayload() {
+                                    .setPayload(new TangoPayload() {
+                                        @Override
+                                        public String getAction() {
+                                            return "write";
+                                        }
+
                                         @Override
                                         public String getHost() {
                                             return "hzgxenvtest:10000";
@@ -80,8 +84,8 @@ public class TestClient {
 
         executorService.shutdownNow();
 
-        System.out.println(String.format("Total writes count: %d", counter.get()));
-        System.out.println(String.format("Total errors count: %d", errors.get()));
+        System.out.printf("Total writes count: %d%n", counter.get());
+        System.out.printf("Total errors count: %d%n", errors.get());
     }
 
 
@@ -105,9 +109,13 @@ public class TestClient {
                             .request(MediaType.APPLICATION_JSON_TYPE)
                             .buildPost(Entity.json(Message.builder()
                                     .setId(id)
-                                    .setAction("write")
                                     .setTarget("tango")
-                                    .addPayload(new TangoPayload() {
+                                    .setPayload(new TangoPayload() {
+                                        @Override
+                                        public String getAction() {
+                                            return "write";
+                                        }
+
                                         @Override
                                         public String getHost() {
                                             return "hzgxenvtest:10000";
@@ -139,8 +147,8 @@ public class TestClient {
 
         executorService.shutdownNow();
 
-        System.out.println(String.format("Total writes count: %d", counter.get()));
-        System.out.println(String.format("Total errors count: %d", errors.get()));
+        System.out.printf("Total writes count: %d%n", counter.get());
+        System.out.printf("Total errors count: %d%n", errors.get());
     }
 
 }
