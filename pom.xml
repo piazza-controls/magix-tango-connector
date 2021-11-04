@@ -15,11 +15,6 @@
         </developer>
     </developers>
 
-    <organization>
-        <name>Helmholtz-Zentrum Geesthacht</name>
-        <url>https://hzg.de</url>
-    </organization>
-
     <licenses>
         <license>
             <name>GPL-v3.0</name>
@@ -44,14 +39,6 @@
         <url>https://github.com/waltz-controls/magix-tango-connector</url>
         <tag>HEAD</tag>
     </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>GitHub Ingvord Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/Ingvord/RxJTango</url>
-        </repository>
-    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -108,11 +95,6 @@
             <version>2.0</version>
         </dependency>
         <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-async</artifactId>
-            <version>${mongodb-driver.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jongo</groupId>
             <artifactId>jongo</artifactId>
             <version>1.4.0</version>
@@ -128,14 +110,19 @@
             <version>${slf4j-api.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.tango-controls</groupId>
-            <artifactId>RxJTango</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
             <version>3.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>de.hereon.tango</groupId>
+            <artifactId>ez</artifactId>
+            <version>1.0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>waltz-controls.magix</groupId>
+            <artifactId>java-client</artifactId>
+            <version>0.1</version>
         </dependency>
     </dependencies>
 
@@ -208,16 +195,15 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>bintray-release</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/hzgde/hzg-wpn-projects</url>
+            <id>github-hzg</id>
+            <url>https://maven.pkg.github.com/hereon-wpi/*</url>
         </repository>
         <repository>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/Ingvord/RxJTango</url>
+            <id>github-waltz</id>
+            <url>https://maven.pkg.github.com/waltz-controls/*</url>
         </repository>
     </repositories>
 
